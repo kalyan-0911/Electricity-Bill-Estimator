@@ -133,7 +133,7 @@ electricity-bill-estimator/
 
 | Basic Calculator | Slab-Based | Annual Dashboard |
 |---|---|---|
-| ![Basic](Screenshots/base_calculator.png) | ![Slab](Screenshots/monthly_dashboard.png) | ![Dashboard](Screenshots/slab-based.png) |
+| ![Basic](Screenshots/base_calculator.png) | ![Slab](Screenshots/slab-based.png) | ![Dashboard](Screenshots/monthly_dashboard.png) |
 
 ---
 

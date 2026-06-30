@@ -1,4 +1,25 @@
 # pyrefly: ignore [missing-import]
+import warnings
+import logging
+
+# Setup warnings and logging immediately, before 3rd party libraries
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+try:
+    from starlette.exceptions import StarletteDeprecationWarning
+    warnings.filterwarnings("ignore", category=StarletteDeprecationWarning)
+except ImportError:
+    pass
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+logger.info("Application initialized")
+
 import gradio as gr
 import pandas as pd
 import plotly.graph_objects as go
@@ -22,10 +43,14 @@ def calculate_flat_bill(units: float, flat_rate: float, base_charge: float) -> T
         tuple[float, float]: Total bill and consumption charge.
     """
     if units is None or flat_rate is None or base_charge is None:
+        logger.warning("Validation error: Missing input fields in calculate_flat_bill")
         raise ValueError("All input fields must be filled.")
     
     if units < 0 or flat_rate < 0 or base_charge < 0:
+        logger.warning("Validation error: Negative inputs in calculate_flat_bill")
         raise ValueError("Inputs cannot be negative. Please enter valid positive values.")
+
+    logger.debug(f"Flat bill calculation triggered for {units} kWh")
 
     consumption_charge = units * flat_rate
     total_bill = consumption_charge + base_charge
@@ -48,16 +73,22 @@ def calculate_slab_bill(units: float, slab1_limit: float, slab1_rate: float, sla
         tuple[float, float, str]: Total bill, consumption charge, and a breakdown string.
     """
     if None in (units, slab1_limit, slab1_rate, slab2_limit, slab2_rate, slab3_rate, base_charge):
+        logger.warning("Validation error: Missing input fields in calculate_slab_bill")
         raise ValueError("All input fields must be filled.")
         
     if units < 0 or base_charge < 0 or slab1_limit < 0 or slab2_limit < 0:
+        logger.warning("Validation error: Negative inputs in calculate_slab_bill")
         raise ValueError("Values cannot be negative. Please enter valid positive values.")
         
     if slab1_limit >= slab2_limit:
+        logger.warning("Validation error: Invalid slab limits in calculate_slab_bill")
         raise ValueError("Slab 1 limit must be strictly less than Slab 2 limit.")
         
     if slab1_rate < 0 or slab2_rate < 0 or slab3_rate < 0:
+        logger.warning("Validation error: Negative rates in calculate_slab_bill")
         raise ValueError("Rates cannot be negative.")
+
+    logger.debug(f"Slab bill calculation triggered for {units} kWh")
 
     breakdown = []
     consumption_charge = 0.0
@@ -98,6 +129,7 @@ def calculate_slab_bill(units: float, slab1_limit: float, slab1_rate: float, sla
 def basic_calculator(units: float, flat_rate: float, base_charge: float) -> str:
     try:
         total, consumption = calculate_flat_bill(units, flat_rate, base_charge)
+        logger.info("Flat bill calculated")
         return (
             f"### Total Bill: **₹{total:.2f}**\n\n"
             f"**Breakdown:**\n"
@@ -112,15 +144,73 @@ def slab_calculator(units: float, slab1_limit: float, slab1_rate: float, slab2_l
         total, consumption, breakdown = calculate_slab_bill(
             units, slab1_limit, slab1_rate, slab2_limit, slab2_rate, slab3_rate, base_charge
         )
-        return (
-            f"### Total Bill: **₹{total:.2f}**\n\n"
-            f"**Breakdown:**\n"
-            f"- Base Customer Charge: ₹{base_charge:.2f}\n"
-            f"{breakdown}\n"
-            f"- Total Energy Consumption Charge: ₹{consumption:.2f}"
-        )
+        logger.info("Slab bill calculated")
+        
+        # Build HTML table
+        html = f"""
+        <div style="background-color: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155;">
+            <h3 style="margin-top: 0; color: #38bdf8; margin-bottom: 15px;">🧾 Estimated Billing Statement</h3>
+            <table style="width: 100%; border-collapse: collapse; color: #e2e8f0; font-size: 14px; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #475569; color: #94a3b8;">
+                        <th style="padding: 10px 8px;">Component</th>
+                        <th style="padding: 10px 8px;">Units</th>
+                        <th style="padding: 10px 8px;">Rate</th>
+                        <th style="padding: 10px 8px; text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px;">Base Customer Charge</td>
+                        <td style="padding: 10px 8px;">-</td>
+                        <td style="padding: 10px 8px;">-</td>
+                        <td style="padding: 10px 8px; text-align: right;">₹{base_charge:.2f}</td>
+                    </tr>
+        """
+        
+        if breakdown == "No consumption charge applied (0 kWh).":
+            html += f"""
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px; color: #94a3b8;" colspan="4">No consumption charge applied (0 kWh)</td>
+                    </tr>
+            """
+        else:
+            for line in breakdown.split('\n'):
+                if not line.strip(): continue
+                # Parse: "Slab 1 (0-100 kWh): 100.0 kWh @ ₹0.100/kWh = ₹10.00"
+                comp, rest = line.split(': ', 1)
+                units_rate, amt = rest.split(' = ', 1)
+                units_str, rate_str = units_rate.split(' @ ', 1)
+                html += f"""
+                    <tr style="border-bottom: 1px solid #334155;">
+                        <td style="padding: 10px 8px;">{comp}</td>
+                        <td style="padding: 10px 8px;">{units_str}</td>
+                        <td style="padding: 10px 8px;">{rate_str}</td>
+                        <td style="padding: 10px 8px; text-align: right;">{amt}</td>
+                    </tr>
+                """
+                
+        html += f"""
+                    <tr style="border-bottom: 2px solid #475569;">
+                        <td style="padding: 10px 8px; font-weight: bold;">Energy Charge Total</td>
+                        <td style="padding: 10px 8px;"></td>
+                        <td style="padding: 10px 8px;"></td>
+                        <td style="padding: 10px 8px; text-align: right; font-weight: bold;">₹{consumption:.2f}</td>
+                    </tr>
+                    <tr style="background-color: #0f172a;">
+                        <td style="padding: 15px 8px; font-weight: bold; font-size: 16px; color: #10b981;">Final Bill</td>
+                        <td style="padding: 15px 8px;"></td>
+                        <td style="padding: 15px 8px;"></td>
+                        <td style="padding: 15px 8px; text-align: right; font-weight: bold; font-size: 16px; color: #10b981;">₹{total:.2f}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        """
+        
+        return html
     except Exception as e:
-        return f"⚠️ **Error:** {str(e)}"
+        return f"<div style='color: #ef4444;'>⚠️ **Error:** {str(e)}</div>"
 
 def generate_comparison_charts(mode: str, jan: float, feb: float, mar: float, apr: float, may: float, jun: float, jul: float, aug: float, sep: float, oct: float, nov: float, dec: float, flat_rate: float, slab1_limit: float, slab1_rate: float, slab2_limit: float, slab2_rate: float, slab3_rate: float, base_charge: float) -> Tuple[go.Figure, str]:
     try:
@@ -133,9 +223,13 @@ def generate_comparison_charts(mode: str, jan: float, feb: float, mar: float, ap
 
         # Validate inputs
         if any(u is None or u < 0 for u in usages):
+            logger.warning("Validation error: Invalid usages in dashboard generation")
             raise ValueError("All monthly usages must be filled and non-negative.")
         if flat_rate is None or base_charge is None:
+            logger.warning("Validation error: Missing global settings in dashboard generation")
             raise ValueError("Flat rate and base charge are required for comparison.")
+        
+
         
         flat_bills = []
         slab_bills = []
@@ -252,6 +346,7 @@ def generate_comparison_charts(mode: str, jan: float, feb: float, mar: float, ap
         </div>
         """
 
+        logger.info("Dashboard generated successfully")
         return fig, summary_html
 
     except Exception as e:
@@ -346,8 +441,8 @@ with gr.Blocks() as demo:
                 with gr.Column(scale=1):
                     slab_units = gr.Number(label="Energy Consumed (kWh)", value=350, minimum=0)
                     calc_slab_btn = gr.Button("Calculate Slab Bill", variant="primary")
-                with gr.Column(scale=1):
-                    slab_output = gr.Markdown("### Results will appear here after calculation.")
+                with gr.Column(scale=2):
+                    slab_output = gr.HTML("<div style='color: #64748b; padding-top: 20px;'>Results will appear here after calculation.</div>")
             
             calc_slab_btn.click(
                 fn=slab_calculator,
@@ -402,6 +497,8 @@ with gr.Blocks() as demo:
             )
 
 if __name__ == "__main__":
+    logger.info("Configuration loaded")
+    logger.info("Gradio server starting...")
     demo.launch(
         server_name="127.0.0.1",
         server_port=7860,

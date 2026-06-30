@@ -68,7 +68,7 @@ def calculate_slab_bill(units: float, slab1_limit: float, slab1_rate: float, sla
     if slab1_units > 0:
         charge = slab1_units * slab1_rate
         consumption_charge += charge
-        breakdown.append(f"Slab 1 (0-{slab1_limit} kWh): {slab1_units:.1f} kWh @ ${slab1_rate:.3f}/kWh = ${charge:.2f}")
+        breakdown.append(f"Slab 1 (0-{slab1_limit} kWh): {slab1_units:.1f} kWh @ ₹{slab1_rate:.3f}/kWh = ₹{charge:.2f}")
         remaining_units -= slab1_units
 
     # Slab 2
@@ -78,14 +78,14 @@ def calculate_slab_bill(units: float, slab1_limit: float, slab1_rate: float, sla
         if slab2_units > 0:
             charge = slab2_units * slab2_rate
             consumption_charge += charge
-            breakdown.append(f"Slab 2 ({slab1_limit}-{slab2_limit} kWh): {slab2_units:.1f} kWh @ ${slab2_rate:.3f}/kWh = ${charge:.2f}")
+            breakdown.append(f"Slab 2 ({slab1_limit}-{slab2_limit} kWh): {slab2_units:.1f} kWh @ ₹{slab2_rate:.3f}/kWh = ₹{charge:.2f}")
             remaining_units -= slab2_units
 
     # Slab 3
     if remaining_units > 0:
         charge = remaining_units * slab3_rate
         consumption_charge += charge
-        breakdown.append(f"Slab 3 (>{slab2_limit} kWh): {remaining_units:.1f} kWh @ ${slab3_rate:.3f}/kWh = ${charge:.2f}")
+        breakdown.append(f"Slab 3 (>{slab2_limit} kWh): {remaining_units:.1f} kWh @ ₹{slab3_rate:.3f}/kWh = ₹{charge:.2f}")
 
     total_bill = consumption_charge + base_charge
     breakdown_text = "\n".join(breakdown) if breakdown else "No consumption charge applied (0 kWh)."
@@ -99,10 +99,10 @@ def basic_calculator(units: float, flat_rate: float, base_charge: float) -> str:
     try:
         total, consumption = calculate_flat_bill(units, flat_rate, base_charge)
         return (
-            f"### Total Bill: **${total:.2f}**\n\n"
+            f"### Total Bill: **₹{total:.2f}**\n\n"
             f"**Breakdown:**\n"
-            f"- Base Customer Charge: ${base_charge:.2f}\n"
-            f"- Energy Consumption Charge ({units:.1f} kWh @ ${flat_rate:.3f}/kWh): ${consumption:.2f}"
+            f"- Base Customer Charge: ₹{base_charge:.2f}\n"
+            f"- Energy Consumption Charge ({units:.1f} kWh @ ₹{flat_rate:.3f}/kWh): ₹{consumption:.2f}"
         )
     except Exception as e:
         return f"⚠️ **Error:** {str(e)}"
@@ -113,11 +113,11 @@ def slab_calculator(units: float, slab1_limit: float, slab1_rate: float, slab2_l
             units, slab1_limit, slab1_rate, slab2_limit, slab2_rate, slab3_rate, base_charge
         )
         return (
-            f"### Total Bill: **${total:.2f}**\n\n"
+            f"### Total Bill: **₹{total:.2f}**\n\n"
             f"**Breakdown:**\n"
-            f"- Base Customer Charge: ${base_charge:.2f}\n"
+            f"- Base Customer Charge: ₹{base_charge:.2f}\n"
             f"{breakdown}\n"
-            f"- Total Energy Consumption Charge: ${consumption:.2f}"
+            f"- Total Energy Consumption Charge: ₹{consumption:.2f}"
         )
     except Exception as e:
         return f"⚠️ **Error:** {str(e)}"
@@ -145,7 +145,7 @@ def generate_comparison_charts(jan: float, feb: float, mar: float, apr: float, m
         # Create interactive Plotly figure
         fig = make_subplots(
             rows=1, cols=2,
-            subplot_titles=("Monthly Energy Consumption (kWh)", "Monthly Estimated Cost Comparison ($)"),
+            subplot_titles=("Monthly Energy Consumption (kWh)", "Monthly Estimated Cost Comparison (₹)"),
             horizontal_spacing=0.15
         )
 
@@ -172,7 +172,7 @@ def generate_comparison_charts(jan: float, feb: float, mar: float, apr: float, m
                 name="Flat Rate Model",
                 line=dict(color="#f59e0b", width=3), # Amber
                 marker=dict(size=8),
-                hovertemplate="Month: %{x}<br>Flat Bill: $%{y:.2f}<extra></extra>"
+                hovertemplate="Month: %{x}<br>Flat Bill: ₹%{y:.2f}<extra></extra>"
             ),
             row=1, col=2
         )
@@ -185,7 +185,7 @@ def generate_comparison_charts(jan: float, feb: float, mar: float, apr: float, m
                 name="Slab Pricing Model",
                 line=dict(color="#3b82f6", width=3, dash='dash'), # Blue
                 marker=dict(size=8),
-                hovertemplate="Month: %{x}<br>Slab Bill: $%{y:.2f}<extra></extra>"
+                hovertemplate="Month: %{x}<br>Slab Bill: ₹%{y:.2f}<extra></extra>"
             ),
             row=1, col=2
         )
@@ -233,16 +233,16 @@ def generate_comparison_charts(jan: float, feb: float, mar: float, apr: float, m
                 </tr>
                 <tr>
                     <td style="padding: 6px 0;">Total Cost under Flat Rate:</td>
-                    <td style="text-align: right; font-weight: bold; color: #f59e0b;">${total_flat_cost:.2f}</td>
+                    <td style="text-align: right; font-weight: bold; color: #f59e0b;">₹{total_flat_cost:.2f}</td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0;">Total Cost under Slab Pricing:</td>
-                    <td style="text-align: right; font-weight: bold; color: #3b82f6;">${total_slab_cost:.2f}</td>
+                    <td style="text-align: right; font-weight: bold; color: #3b82f6;">₹{total_slab_cost:.2f}</td>
                 </tr>
                 <tr style="border-top: 1px solid #475569;">
                     <td style="padding: 10px 0 0 0; font-weight: bold; color: #a7f3d0;">Recommendation:</td>
                     <td style="padding: 10px 0 0 0; text-align: right; font-weight: bold; color: #34d399;">
-                        {cheaper_model} is more economical by ${abs_savings:.2f}!
+                        {cheaper_model} is more economical by ₹{abs_savings:.2f}!
                     </td>
                 </tr>
             </table>
@@ -304,18 +304,18 @@ with gr.Blocks() as demo:
     with gr.Accordion("⚙️ Global Price Config & Base Fees", open=True):
         gr.Markdown("Configure pricing variables here to apply to both calculators and the monthly comparison tab.")
         with gr.Row():
-            global_base = gr.Number(value=15.00, label="Fixed Base Charge ($)", precision=2)
-            global_flat_rate = gr.Number(value=0.150, label="Flat Rate ($/kWh)", precision=3)
+            global_base = gr.Number(value=15.00, label="Fixed Base Charge (₹)", precision=2)
+            global_flat_rate = gr.Number(value=0.150, label="Flat Rate (₹/kWh)", precision=3)
         
         with gr.Row():
             gr.Markdown("### Slab Tiers Configuration")
         with gr.Row():
             slab1_lim = gr.Number(value=100, label="Slab 1 Limit (kWh)", precision=0)
-            slab1_rt = gr.Number(value=0.100, label="Slab 1 Rate ($/kWh)", precision=3)
+            slab1_rt = gr.Number(value=0.100, label="Slab 1 Rate (₹/kWh)", precision=3)
         with gr.Row():
             slab2_lim = gr.Number(value=300, label="Slab 2 Limit (kWh)", precision=0)
-            slab2_rt = gr.Number(value=0.140, label="Slab 2 Rate ($/kWh)", precision=3)
-            slab3_rt = gr.Number(value=0.200, label="Slab 3 Rate ($/kWh)", precision=3)
+            slab2_rt = gr.Number(value=0.140, label="Slab 2 Rate (₹/kWh)", precision=3)
+            slab3_rt = gr.Number(value=0.200, label="Slab 3 Rate (₹/kWh)", precision=3)
 
     # Main Tab Control
     with gr.Tabs():

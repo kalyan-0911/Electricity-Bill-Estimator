@@ -133,7 +133,7 @@ electricity-bill-estimator/
 
 | Basic Calculator | Slab-Based | Monthly Dashboard |
 |---|---|---|
-| ![Basic](Screenshots/basic.png) | ![Slab](screenshots/slab.png) | ![Dashboard](screenshots/dashboard.png) |
+| ![Basic](Screenshots/base_calculator.png) | ![Slab](Screenshots/monthly_dashboard.png) | ![Dashboard](Screenshots/slab-based.png) |
 
 ---
 
@@ -150,15 +150,15 @@ electricity-bill-estimator/
 ## 👥 Contributors
 
 - **Kalyan** (Repository Owner)
-- **Thirilose Jones Nithish R** (Collaborator)
-- **Ramyasrik17** (Collaborator)
+- **[Thirilose Jones Nithish R](https://github.com/thirilose-learn)** (Collaborator)
+- **[Ramyasri K](https://github.com/Ramyasrik17)** (Collaborator)
 
 ---
 
 ## 👨‍💻 Author
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/kalyan-0911)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/your-profile)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/kalyan-g-3b8184419)
 
 ---
 
